@@ -1,0 +1,117 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String         @id @default(uuid())
+  fid                 Int            @unique
+  username            String
+  displayName         String?
+  pfpUrl              String?
+  bio                 String?
+  followers           Int            @default(0)
+  following           Int            @default(0)
+  contentQuality      Float          @default(50.0)
+  replyQuality        Float          @default(50.0)
+  engagementQuality   Float          @default(50.0)
+  balance             Float          @default(100.0) // Initial balance in USDC
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  
+  // Relations
+  createdTasks        Task[]         @relation("TaskCreator")
+  completedTasks      Task[]         @relation("TaskCompleter")
+  transactions        Transaction[]
+  boosts              Boost[]
+  mindShares          MindShare[]
+  earnings            Earning[]
+}
+
+model Task {
+  id              String    @id @default(uuid())
+  creatorId       String
+  creator         User      @relation("TaskCreator", fields: [creatorId], references: [id])
+  title           String
+  description     String?
+  link            String
+  reward          Float
+  status          String    @default("active") // active, completed, cancelled
+  completedById   String?
+  completedBy     User?     @relation("TaskCompleter", fields: [completedById], references: [id])
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([status])
+  @@index([creatorId])
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  type        String   // deposit, withdrawal, task_created, task_completed, boost_created
+  amount      Float
+  description String
+  balanceBefore Float
+  balanceAfter  Float
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Boost {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  castId      String
+  castUrl     String
+  amount      Float
+  duration    Int      // in hours
+  startTime   DateTime @default(now())
+  endTime     DateTime
+  views       Int      @default(0)
+  engagement  Int      @default(0)
+  status      String   @default("active") // active, completed, cancelled
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([status])
+}
+
+model MindShare {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  content     String
+  likes       Int      @default(0)
+  comments    Int      @default(0)
+  shares      Int      @default(0)
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Earning {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  source      String   // task_completion, referral, bonus
+  amount      Float
+  description String
+  taskId      String?
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([source])
+  @@index([createdAt])
+}
