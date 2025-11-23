@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { MessageSquare, Heart, MessageCircle, Share2, Send } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/utils';
+import FarcasterLogin from '@/components/farcaster-login';
 
 interface MindSharePost {
     id: string;
@@ -15,61 +17,35 @@ interface MindSharePost {
 }
 
 export default function MindSharePage() {
+    const { data: session } = useSession();
     const [posts, setPosts] = useState<MindSharePost[]>([]);
     const [newPost, setNewPost] = useState('');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Simulated data - in production, fetch from API
-        setTimeout(() => {
-            setPosts([
-                {
-                    id: '1',
-                    username: 'earnwithalee',
-                    content: 'Just earned my first $50 on Social Rewards! This platform is amazing 🚀',
-                    likes: 24,
-                    comments: 5,
-                    shares: 3,
-                    createdAt: new Date(Date.now() - 3600000).toISOString(),
-                },
-                {
-                    id: '2',
-                    username: 'cryptoenthusiast',
-                    content: 'Love how easy it is to create tasks and reward the community. Great work!',
-                    likes: 18,
-                    comments: 2,
-                    shares: 1,
-                    createdAt: new Date(Date.now() - 7200000).toISOString(),
-                },
-                {
-                    id: '3',
-                    username: 'contentcreator',
-                    content: 'The engagement quality metrics are really helpful for understanding my audience better.',
-                    likes: 31,
-                    comments: 8,
-                    shares: 5,
-                    createdAt: new Date(Date.now() - 10800000).toISOString(),
-                },
-            ]);
+        if (session?.user?.fid) {
+            fetch(`/api/mindshare/posts?fid=${session.user.fid}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.posts) {
+                        setPosts(data.posts);
+                    }
+                    setLoading(false);
+                })
+                .catch(err => {
+                    console.error('Failed to fetch posts:', err);
+                    setLoading(false);
+                });
+        } else {
             setLoading(false);
-        }, 600);
-    }, []);
+        }
+    }, [session?.user?.fid]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newPost.trim()) return;
-
-        const post: MindSharePost = {
-            id: Date.now().toString(),
-            username: 'earnwithalee',
-            content: newPost,
-            likes: 0,
-            comments: 0,
-            shares: 0,
-            createdAt: new Date().toISOString(),
-        };
-
-        setPosts([post, ...posts]);
+        // In a real app, this would POST to an API to create a cast via Neynar
+        alert('Posting to Farcaster is not yet implemented in this demo.');
         setNewPost('');
     };
 
@@ -78,6 +54,22 @@ export default function MindSharePage() {
             <div className="space-y-6 animate-fade-in">
                 <div className="glass rounded-2xl p-6 animate-pulse">
                     <div className="h-32 bg-white/10 rounded-lg"></div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!session) {
+        return (
+            <div className="max-w-md mx-auto mt-20 text-center space-y-6 animate-fade-in">
+                <div className="glass p-8 rounded-2xl border border-white/10">
+                    <h1 className="text-3xl font-bold text-white mb-4">MindShare</h1>
+                    <p className="text-gray-400 mb-8">
+                        Connect your Farcaster account to view your recent activity and engagement.
+                    </p>
+                    <div className="flex justify-center">
+                        <FarcasterLogin />
+                    </div>
                 </div>
             </div>
         );
@@ -107,8 +99,8 @@ export default function MindSharePage() {
                         type="submit"
                         disabled={!newPost.trim()}
                         className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all ${newPost.trim()
-                                ? 'gradient-accent text-white hover:opacity-90'
-                                : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                            ? 'gradient-accent text-white hover:opacity-90'
+                            : 'bg-gray-700 text-gray-400 cursor-not-allowed'
                             }`}
                     >
                         <Send className="w-5 h-5" />
@@ -119,44 +111,50 @@ export default function MindSharePage() {
 
             {/* Posts Feed */}
             <div className="space-y-4">
-                {posts.map((post) => (
-                    <div
-                        key={post.id}
-                        className="glass rounded-xl p-6 border border-white/10 hover:border-white/20 transition-all animate-slide-up"
-                    >
-                        {/* Post Header */}
-                        <div className="flex items-center space-x-3 mb-4">
-                            <div className="w-10 h-10 rounded-full gradient-accent flex items-center justify-center text-white font-bold">
-                                {post.username.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                                <p className="text-white font-semibold">@{post.username}</p>
-                                <p className="text-xs text-gray-400">
-                                    {formatRelativeTime(post.createdAt)}
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Post Content */}
-                        <p className="text-gray-200 mb-4 leading-relaxed">{post.content}</p>
-
-                        {/* Post Actions */}
-                        <div className="flex items-center space-x-6 pt-4 border-t border-white/10">
-                            <button className="flex items-center space-x-2 text-gray-400 hover:text-red-400 transition-colors">
-                                <Heart className="w-5 h-5" />
-                                <span className="text-sm">{post.likes}</span>
-                            </button>
-                            <button className="flex items-center space-x-2 text-gray-400 hover:text-blue-400 transition-colors">
-                                <MessageCircle className="w-5 h-5" />
-                                <span className="text-sm">{post.comments}</span>
-                            </button>
-                            <button className="flex items-center space-x-2 text-gray-400 hover:text-green-400 transition-colors">
-                                <Share2 className="w-5 h-5" />
-                                <span className="text-sm">{post.shares}</span>
-                            </button>
-                        </div>
+                {posts.length === 0 ? (
+                    <div className="text-center py-10 text-gray-400">
+                        No recent posts found.
                     </div>
-                ))}
+                ) : (
+                    posts.map((post) => (
+                        <div
+                            key={post.id}
+                            className="glass rounded-xl p-6 border border-white/10 hover:border-white/20 transition-all animate-slide-up"
+                        >
+                            {/* Post Header */}
+                            <div className="flex items-center space-x-3 mb-4">
+                                <div className="w-10 h-10 rounded-full gradient-accent flex items-center justify-center text-white font-bold">
+                                    {post.username.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <p className="text-white font-semibold">@{post.username}</p>
+                                    <p className="text-xs text-gray-400">
+                                        {formatRelativeTime(post.createdAt)}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Post Content */}
+                            <p className="text-gray-200 mb-4 leading-relaxed">{post.content}</p>
+
+                            {/* Post Actions */}
+                            <div className="flex items-center space-x-6 pt-4 border-t border-white/10">
+                                <div className="flex items-center space-x-2 text-gray-400">
+                                    <Heart className="w-5 h-5" />
+                                    <span className="text-sm">{post.likes}</span>
+                                </div>
+                                <div className="flex items-center space-x-2 text-gray-400">
+                                    <MessageCircle className="w-5 h-5" />
+                                    <span className="text-sm">{post.comments}</span>
+                                </div>
+                                <div className="flex items-center space-x-2 text-gray-400">
+                                    <Share2 className="w-5 h-5" />
+                                    <span className="text-sm">{post.shares}</span>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
         </div>
     );

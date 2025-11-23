@@ -1,6 +1,7 @@
 'use client';
 
 import { useSession, signOut } from 'next-auth/react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Settings, Bell, Shield, ExternalLink, LogOut, TrendingUp } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
@@ -10,6 +11,31 @@ export default function AccountPage() {
     const { data: session, status } = useSession();
     const loading = status === 'loading';
 
+    const [stats, setStats] = useState({
+        followers: 0,
+        following: 0,
+        score: 0,
+        loading: true
+    });
+
+    useEffect(() => {
+        if (session?.user?.fid) {
+            fetch(`/api/user/stats?fid=${session.user.fid}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.error) {
+                        setStats({
+                            followers: data.followers,
+                            following: data.following,
+                            score: data.score,
+                            loading: false
+                        });
+                    }
+                })
+                .catch(err => console.error('Failed to fetch stats:', err));
+        }
+    }, [session?.user?.fid]);
+
     // STRICT: Only use session data. NO FALLBACKS.
     const user = session?.user ? {
         username: session.user.username,
@@ -17,12 +43,13 @@ export default function AccountPage() {
         pfp: session.user.image,
         bio: session.user.bio,
         fid: session.user.fid,
-        // These will be 0 until we fetch real data from Neynar API
-        balance: 0,
-        followers: 0,
-        following: 0,
+        // Real data from API (or 0 if loading)
+        balance: 0, // Still simulated for now
+        followers: stats.followers,
+        following: stats.following,
         tasksCompleted: 0,
         tasksCreated: 0,
+        score: stats.score,
     } : null;
 
     if (loading) {
@@ -96,20 +123,26 @@ export default function AccountPage() {
 
                         <div className="flex items-center gap-6 pt-2">
                             <div className="text-center md:text-left">
-                                <div className="text-lg font-bold text-white">{user.followers}</div>
+                                <div className="text-lg font-bold text-white">
+                                    {stats.loading ? '...' : user.followers}
+                                </div>
                                 <div className="text-xs text-gray-400">Followers</div>
                             </div>
                             <div className="text-center md:text-left">
-                                <div className="text-lg font-bold text-white">{user.following}</div>
+                                <div className="text-lg font-bold text-white">
+                                    {stats.loading ? '...' : user.following}
+                                </div>
                                 <div className="text-xs text-gray-400">Following</div>
+                            </div>
+                            <div className="text-center md:text-left">
+                                <div className="text-lg font-bold text-white">
+                                    {stats.loading ? '...' : user.score}
+                                </div>
+                                <div className="text-xs text-gray-400">Neynar Score</div>
                             </div>
                             <div className="text-center md:text-left">
                                 <div className="text-lg font-bold text-white">{user.tasksCompleted}</div>
                                 <div className="text-xs text-gray-400">Tasks Done</div>
-                            </div>
-                            <div className="text-center md:text-left">
-                                <div className="text-lg font-bold text-white">{user.tasksCreated}</div>
-                                <div className="text-xs text-gray-400">Created</div>
                             </div>
                         </div>
                     </div>
