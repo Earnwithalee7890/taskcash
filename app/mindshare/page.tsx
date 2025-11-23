@@ -18,13 +18,14 @@ interface MindSharePost {
 
 export default function MindSharePage() {
     const { data: session } = useSession();
+    const user = session?.user as any;
     const [posts, setPosts] = useState<MindSharePost[]>([]);
     const [newPost, setNewPost] = useState('');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (session?.user?.fid) {
-            fetch(`/api/mindshare/posts?fid=${session.user.fid}`)
+        if (user?.fid) {
+            fetch(`/api/mindshare/posts?fid=${user.fid}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.posts) {
@@ -39,7 +40,7 @@ export default function MindSharePage() {
         } else {
             setLoading(false);
         }
-    }, [session?.user?.fid]);
+    }, [user?.fid]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

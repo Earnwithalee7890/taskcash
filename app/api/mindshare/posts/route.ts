@@ -10,12 +10,8 @@ export async function GET(request: Request) {
     }
 
     try {
-        // Fetch user's recent casts from Neynar
-        // Using fetchCastsForUser (or similar method available in SDK v3)
-        // Note: SDK method names might vary slightly, checking common patterns
-        // If fetchCastsForUser isn't direct, we use the feed endpoint
-
-        const response = await neynarClient.fetchFeedForUser(parseInt(fid), { limit: 10 });
+        // Fetch user's recent casts from Neynar using the correct SDK method
+        const response = await neynarClient.fetchCastsForUser({ fid: parseInt(fid), limit: 10 });
 
         const posts = response.casts.map((cast: any) => ({
             id: cast.hash,

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Home, ListTodo, DollarSign, TrendingUp, MessageSquare, User } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
 const navItems = [
     { href: '/', label: 'Hub', icon: Home },
@@ -16,6 +17,7 @@ const navItems = [
 
 export default function Navigation() {
     const pathname = usePathname();
+    const { data: session } = useSession();
 
     return (
         <nav className="sticky top-0 z-50 glass-dark border-b border-white/10">
@@ -37,29 +39,31 @@ export default function Navigation() {
                         </span>
                     </Link>
 
-                    {/* Navigation Links */}
-                    <div className="flex items-center space-x-1">
-                        {navItems.map((item) => {
-                            const Icon = item.icon;
-                            const isActive = pathname === item.href;
+                    {/* Navigation Links - Only show if authenticated */}
+                    {session && (
+                        <div className="flex items-center space-x-1">
+                            {navItems.map((item) => {
+                                const Icon = item.icon;
+                                const isActive = pathname === item.href;
 
-                            return (
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${isActive
+                                return (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${isActive
                                             ? 'bg-white/20 text-white'
                                             : 'text-gray-300 hover:bg-white/10 hover:text-white'
-                                        }`}
-                                >
-                                    <Icon className="w-5 h-5" />
-                                    <span className="hidden md:block text-sm font-medium">
-                                        {item.label}
-                                    </span>
-                                </Link>
-                            );
-                        })}
-                    </div>
+                                            }`}
+                                    >
+                                        <Icon className="w-5 h-5" />
+                                        <span className="hidden md:block text-sm font-medium">
+                                            {item.label}
+                                        </span>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
         </nav>

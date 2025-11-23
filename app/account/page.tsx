@@ -10,6 +10,7 @@ import FarcasterLogin from '@/components/farcaster-login';
 export default function AccountPage() {
     const { data: session, status } = useSession();
     const loading = status === 'loading';
+    const user = session?.user as any;
 
     const [stats, setStats] = useState({
         followers: 0,
@@ -19,8 +20,8 @@ export default function AccountPage() {
     });
 
     useEffect(() => {
-        if (session?.user?.fid) {
-            fetch(`/api/user/stats?fid=${session.user.fid}`)
+        if (user?.fid) {
+            fetch(`/api/user/stats?fid=${user.fid}`)
                 .then(res => res.json())
                 .then(data => {
                     if (!data.error) {
@@ -34,15 +35,15 @@ export default function AccountPage() {
                 })
                 .catch(err => console.error('Failed to fetch stats:', err));
         }
-    }, [session?.user?.fid]);
+    }, [user?.fid]);
 
     // STRICT: Only use session data. NO FALLBACKS.
-    const user = session?.user ? {
-        username: session.user.username,
-        displayName: session.user.name,
-        pfp: session.user.image,
-        bio: session.user.bio,
-        fid: session.user.fid,
+    const userData = user ? {
+        username: user.username,
+        displayName: user.name,
+        pfp: user.image,
+        bio: user.bio,
+        fid: user.fid,
         // Real data from API (or 0 if loading)
         balance: 0, // Still simulated for now
         followers: stats.followers,
@@ -60,7 +61,7 @@ export default function AccountPage() {
         );
     }
 
-    if (!user) {
+    if (!userData) {
         return (
             <div className="max-w-md mx-auto mt-20 text-center space-y-6 animate-fade-in">
                 <div className="glass p-8 rounded-2xl border border-white/10">

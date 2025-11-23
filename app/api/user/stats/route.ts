@@ -17,21 +17,19 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
-        const user = response.users[0];
+        const user: any = response.users[0];
 
-        // Calculate a "Neynar Score" based on available metrics (simulated for now as Neynar Score isn't a direct field)
-        // In a real app, you might fetch this from a specific endpoint or calculate it
-        const score = Math.min(100, (user.follower_count / 100) + (user.active_status === 'active' ? 50 : 0));
+        // Use real Neynar Score if available, otherwise fallback to experimental or calculation
+        // The API response shows 'score' and 'experimental.neynar_user_score'
+        const score = user.score || (user.experimental?.neynar_user_score ? user.experimental.neynar_user_score * 100 : 0);
 
         return NextResponse.json({
             followers: user.follower_count,
             following: user.following_count,
             verifications: user.verifications,
-            activeStatus: user.active_status,
-            powerBadge: user.power_badge,
+            activeStatus: user.active_status || 'inactive', // active_status might not be directly on user object in all responses
+            powerBadge: user.power_badge || false,
             score: Math.round(score),
-            // Neynar user object doesn't always have total casts count directly in bulk fetch
-            // We might need a separate call if strictly required, but for now we'll return what we have
         });
     } catch (error) {
         console.error('Error fetching user stats:', error);

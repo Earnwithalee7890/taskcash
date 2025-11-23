@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { createAppClient, viemConnector } from "@farcaster/auth-client";
 
-export const authOptions = {
+const authOptions = {
     providers: [
         CredentialsProvider({
             name: "Sign in with Farcaster",

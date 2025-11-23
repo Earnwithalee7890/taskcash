@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Wallet, Users, UserPlus, TrendingUp } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/lib/utils';
+import { useSession } from 'next-auth/react';
 
 interface UserData {
     username: string;
@@ -17,28 +18,48 @@ interface UserData {
 }
 
 export default function UserProfile() {
-    const [userData, setUserData] = useState<UserData | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { data: session } = useSession();
+    const user = session?.user as any;
+    const [stats, setStats] = useState({
+        followers: 0,
+        following: 0,
+        score: 0,
+        loading: true
+    });
 
     useEffect(() => {
-        // Simulated user data - in production, fetch from API
-        setTimeout(() => {
-            setUserData({
-                username: 'earnwithalee',
-                displayName: 'Earn With Alee',
-                pfpUrl: 'https://i.imgur.com/placeholder.jpg',
-                followers: 1250,
-                following: 340,
-                contentQuality: 85.5,
-                replyQuality: 78.3,
-                engagementQuality: 92.1,
-                balance: 100.00,
-            });
-            setLoading(false);
-        }, 500);
-    }, []);
+        if (user?.fid) {
+            fetch(`/api/user/stats?fid=${user.fid}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.error) {
+                        setStats({
+                            followers: data.followers,
+                            following: data.following,
+                            score: data.score,
+                            loading: false
+                        });
+                    }
+                })
+                .catch(err => console.error('Failed to fetch stats:', err));
+        }
+    }, [user?.fid]);
 
-    if (loading) {
+    if (!user) return null;
+
+    const userData: UserData = {
+        username: user.username || 'user',
+        displayName: user.name || 'User',
+        pfpUrl: user.image || '',
+        followers: stats.followers,
+        following: stats.following,
+        contentQuality: stats.score, // Using Neynar score as proxy for now
+        replyQuality: 0, // Placeholder
+        engagementQuality: 0, // Placeholder
+        balance: 0, // Placeholder
+    };
+
+    if (stats.loading) {
         return (
             <div className="glass rounded-2xl p-6 animate-pulse">
                 <div className="h-20 bg-white/10 rounded-lg"></div>
@@ -46,15 +67,17 @@ export default function UserProfile() {
         );
     }
 
-    if (!userData) return null;
-
     return (
         <div className="glass rounded-2xl p-6 border border-white/10 animate-slide-up">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                 {/* User Info */}
                 <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 rounded-full gradient-primary flex items-center justify-center text-2xl font-bold text-white">
-                        {userData.username.charAt(0).toUpperCase()}
+                    <div className="w-16 h-16 rounded-full gradient-primary flex items-center justify-center text-2xl font-bold text-white overflow-hidden">
+                        {userData.pfpUrl ? (
+                            <img src={userData.pfpUrl} alt={userData.username} className="w-full h-full object-cover" />
+                        ) : (
+                            userData.username.charAt(0).toUpperCase()
+                        )}
                     </div>
                     <div>
                         <h1 className="text-2xl font-bold text-white">
@@ -108,10 +131,10 @@ export default function UserProfile() {
                 <div className="glass-dark rounded-lg p-4 border border-white/10">
                     <div className="flex items-center space-x-2 mb-2">
                         <TrendingUp className="w-4 h-4 text-green-400" />
-                        <p className="text-xs text-gray-400">Content</p>
+                        <p className="text-xs text-gray-400">Neynar Score</p>
                     </div>
                     <p className="text-xl font-bold text-white">
-                        {userData.contentQuality.toFixed(1)}
+                        {userData.contentQuality}
                     </p>
                 </div>
 
@@ -122,7 +145,7 @@ export default function UserProfile() {
                         <p className="text-xs text-gray-400">Replies</p>
                     </div>
                     <p className="text-xl font-bold text-white">
-                        {userData.replyQuality.toFixed(1)}
+                        -
                     </p>
                 </div>
 
@@ -133,7 +156,7 @@ export default function UserProfile() {
                         <p className="text-xs text-gray-400">Engagement</p>
                     </div>
                     <p className="text-xl font-bold text-white">
-                        {userData.engagementQuality.toFixed(1)}
+                        -
                     </p>
                 </div>
             </div>
