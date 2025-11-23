@@ -13,13 +13,13 @@ export async function GET(request: Request) {
     username = username.replace('@', '');
 
     try {
-        const response = await (neynarClient as any).searchUser(username);
+        const response = await (neynarClient as any).lookupUserByUsername({ username });
 
-        if (!response.result || !response.result.users || response.result.users.length === 0) {
+        if (!response.result || !response.result.user) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
-        const user: any = response.result.users[0];
+        const user: any = response.result.user;
 
         return NextResponse.json({
             fid: user.fid.toString(),
