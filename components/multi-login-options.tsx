@@ -2,14 +2,14 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { User, Hash, Wallet, Sparkles, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { User, Wallet, ArrowRight, CheckCircle2 } from 'lucide-react';
 import FarcasterLogin from './farcaster-login';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type LoginMethod = 'fid' | 'username' | 'wallet';
+type LoginMethod = 'username' | 'wallet';
 
 export default function MultiLoginOptions() {
-    const [loginMethod, setLoginMethod] = useState<LoginMethod>('fid');
+    const [loginMethod, setLoginMethod] = useState<LoginMethod>('username');
     const [inputValue, setInputValue] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -22,31 +22,7 @@ export default function MultiLoginOptions() {
         setSuccess(false);
 
         try {
-            if (loginMethod === 'fid') {
-                const res = await fetch(`/api/auth/login-fid?fid=${inputValue}`);
-                const data = await res.json();
-
-                if (data.error) {
-                    setError(data.error);
-                    setLoading(false);
-                    return;
-                }
-
-                setSuccess(true);
-                setTimeout(async () => {
-                    await signIn('credentials', {
-                        message: 'Login via FID',
-                        signature: 'fid-auth',
-                        fid: data.fid,
-                        username: data.username,
-                        displayName: data.displayName,
-                        pfpUrl: data.pfpUrl,
-                        bio: data.bio,
-                        redirect: true,
-                        callbackUrl: '/',
-                    });
-                }, 800);
-            } else if (loginMethod === 'username') {
+            if (loginMethod === 'username') {
                 const res = await fetch(`/api/auth/login-username?username=${inputValue}`);
                 const data = await res.json();
 
@@ -113,13 +89,6 @@ export default function MultiLoginOptions() {
 
     const loginMethods = [
         {
-            id: 'fid' as LoginMethod,
-            label: 'FID',
-            icon: Hash,
-            description: 'Farcaster ID',
-            gradient: 'from-blue-500 to-cyan-500'
-        },
-        {
             id: 'username' as LoginMethod,
             label: 'Username',
             icon: User,
@@ -139,8 +108,7 @@ export default function MultiLoginOptions() {
 
     return (
         <div className="w-full max-w-md space-y-6">
-            {/* Login Method Tabs */}
-            <div className="grid grid-cols-4 gap-3 p-2 glass rounded-xl border border-white/10">
+            <div className="grid grid-cols-2 gap-3 p-2 glass rounded-xl border border-white/10">
                 {loginMethods.map((method) => {
                     const Icon = method.icon;
                     return (
@@ -216,7 +184,7 @@ export default function MultiLoginOptions() {
                             {loginMethod !== 'wallet' && (
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-gray-300">
-                                        {loginMethod === 'fid' ? 'Enter your FID' : 'Enter your username'}
+                                        {loginMethod === 'username' ? 'Enter your username' : ''}
                                     </label>
                                     <div className="relative">
                                         <input
@@ -224,9 +192,7 @@ export default function MultiLoginOptions() {
                                             value={inputValue}
                                             onChange={(e) => setInputValue(e.target.value)}
                                             placeholder={
-                                                loginMethod === 'fid'
-                                                    ? '3'
-                                                    : 'dwr'
+                                                'dwr'
                                             }
                                             className="w-full px-4 py-3 pl-12 rounded-xl glass-dark border-2 border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 transition-all duration-300"
                                             required
