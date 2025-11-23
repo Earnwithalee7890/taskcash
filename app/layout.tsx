@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import Navigation from "@/components/navigation";
+import FarcasterProvider from "@/components/farcaster-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,12 +24,14 @@ export default function RootLayout({
         <html lang="en" className="dark">
             <body className={inter.className}>
                 <Providers>
-                    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-                        <Navigation />
-                        <main className="container mx-auto px-4 py-6 max-w-7xl">
-                            {children}
-                        </main>
-                    </div>
+                    <FarcasterProvider>
+                        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+                            <Navigation />
+                            <main className="container mx-auto px-4 py-6 max-w-7xl">
+                                {children}
+                            </main>
+                        </div>
+                    </FarcasterProvider>
                 </Providers>
             </body>
         </html>
