@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import { Settings, Bell, Shield, ExternalLink, LogOut, TrendingUp } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
@@ -10,15 +10,16 @@ export default function AccountPage() {
     const { data: session, status } = useSession();
     const loading = status === 'loading';
 
-    // Use session data if available, otherwise show placeholder
+    // STRICT: Only use session data. NO FALLBACKS.
     const user = session?.user ? {
-        username: session.user.username || 'user',
-        displayName: session.user.name || 'User',
-        pfp: session.user.image || 'https://github.com/shadcn.png',
-        bio: session.user.bio || 'No bio available',
+        username: session.user.username,
+        displayName: session.user.name,
+        pfp: session.user.image,
+        bio: session.user.bio,
         fid: session.user.fid,
-        balance: 100.00, // Still simulated for now
-        followers: 0, // Will fetch real data in next step
+        // These will be 0 until we fetch real data from Neynar API
+        balance: 0,
+        followers: 0,
         following: 0,
         tasksCompleted: 0,
         tasksCreated: 0,
@@ -40,8 +41,15 @@ export default function AccountPage() {
                     <p className="text-gray-400 mb-8">
                         Connect your Farcaster account to start earning rewards and boosting your content.
                     </p>
-                    <div className="flex justify-center">
+                    <div className="flex flex-col items-center gap-4">
                         <FarcasterLogin />
+                        {/* Debug: Force clear any stale session */}
+                        <button
+                            onClick={() => signOut({ callbackUrl: '/account' })}
+                            className="text-xs text-gray-500 hover:text-white underline"
+                        >
+                            Clear Session (Debug)
+                        </button>
                     </div>
                 </div>
             </div>
@@ -59,8 +67,8 @@ export default function AccountPage() {
                         <div className="w-24 h-24 rounded-full p-1 gradient-primary">
                             <div className="w-full h-full rounded-full overflow-hidden bg-black">
                                 <Image
-                                    src={user.pfp}
-                                    alt={user.username}
+                                    src={user.pfp || 'https://github.com/shadcn.png'}
+                                    alt={user.username || 'User'}
                                     width={96}
                                     height={96}
                                     className="object-cover"
@@ -120,18 +128,18 @@ export default function AccountPage() {
 
                 <div className="glass rounded-xl p-6 border border-white/10">
                     <h3 className="text-gray-400 text-sm font-medium mb-2">Total Earned</h3>
-                    <div className="text-3xl font-bold text-green-400">{formatCurrency(125.50)}</div>
+                    <div className="text-3xl font-bold text-green-400">{formatCurrency(0)}</div>
                     <div className="mt-2 text-xs text-green-400/80 flex items-center">
                         <TrendingUp className="w-3 h-3 mr-1" />
-                        +12% this week
+                        +0% this week
                     </div>
                 </div>
 
                 <div className="glass rounded-xl p-6 border border-white/10">
                     <h3 className="text-gray-400 text-sm font-medium mb-2">Net Profit</h3>
-                    <div className="text-3xl font-bold text-blue-400">{formatCurrency(80.50)}</div>
+                    <div className="text-3xl font-bold text-blue-400">{formatCurrency(0)}</div>
                     <div className="mt-2 text-xs text-blue-400/80">
-                        After spending {formatCurrency(45.00)}
+                        After spending {formatCurrency(0)}
                     </div>
                 </div>
             </div>
