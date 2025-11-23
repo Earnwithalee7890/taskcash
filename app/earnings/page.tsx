@@ -1,68 +1,45 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { DollarSign, TrendingUp, CheckCircle, Gift, Calendar } from 'lucide-react';
 import { formatCurrency, formatRelativeTime } from '@/lib/utils';
 
 interface Earning {
-    id: string;
-    source: string;
+    taskId: string;
     amount: number;
-    description: string;
-    createdAt: string;
+    date: string;
+    status: string;
 }
 
 export default function EarningsPage() {
+    const { data: session } = useSession();
+    const user = session?.user as any;
     const [earnings, setEarnings] = useState<Earning[]>([]);
     const [loading, setLoading] = useState(true);
     const [totalEarnings, setTotalEarnings] = useState(0);
+    const [pending, setPending] = useState(0);
+    const [paid, setPaid] = useState(0);
 
     useEffect(() => {
-        // Simulated data - in production, fetch from API
-        setTimeout(() => {
-            const earningsData = [
-                {
-                    id: '1',
-                    source: 'task_completion',
-                    amount: 5.00,
-                    description: 'Completed: Read Article & Comment',
-                    createdAt: new Date(Date.now() - 3600000).toISOString(),
-                },
-                {
-                    id: '2',
-                    source: 'task_completion',
-                    amount: 2.50,
-                    description: 'Completed: Follow on Warpcast',
-                    createdAt: new Date(Date.now() - 7200000).toISOString(),
-                },
-                {
-                    id: '3',
-                    source: 'task_completion',
-                    amount: 3.75,
-                    description: 'Completed: Join Discord Community',
-                    createdAt: new Date(Date.now() - 10800000).toISOString(),
-                },
-                {
-                    id: '4',
-                    source: 'bonus',
-                    amount: 10.00,
-                    description: 'Welcome Bonus',
-                    createdAt: new Date(Date.now() - 86400000).toISOString(),
-                },
-                {
-                    id: '5',
-                    source: 'task_completion',
-                    amount: 4.25,
-                    description: 'Completed: Share on Twitter',
-                    createdAt: new Date(Date.now() - 14400000).toISOString(),
-                },
-            ];
-
-            setEarnings(earningsData);
-            setTotalEarnings(earningsData.reduce((sum, e) => sum + e.amount, 0));
+        if (user?.fid) {
+            fetch(`/api/earnings?fid=${user.fid}`)
+                .then(res => res.json())
+                .then(data => {
+                    setEarnings(data.history || []);
+                    setTotalEarnings(data.total || 0);
+                    setPending(data.pending || 0);
+                    setPaid(data.paid || 0);
+                    setLoading(false);
+                })
+                .catch(err => {
+                    console.error('Failed to fetch earnings:', err);
+                    setLoading(false);
+                });
+        } else {
             setLoading(false);
-        }, 600);
-    }, []);
+        }
+    }, [user?.fid]);
 
     const getSourceIcon = (source: string) => {
         switch (source) {
@@ -111,90 +88,99 @@ export default function EarningsPage() {
             </div>
 
             {/* Total Earnings Card */}
-            <div className="glass rounded-2xl p-8 border border-white/10 text-center">
-                <p className="text-gray-400 mb-2">Total Earnings</p>
-                <p className="text-5xl font-bold text-white mb-4">
-                    {formatCurrency(totalEarnings)}
-                </p>
-                <div className="flex items-center justify-center space-x-6 text-sm">
-                    <div className="flex items-center space-x-2">
-                        <CheckCircle className="w-4 h-4 text-green-400" />
-                        <span className="text-gray-300">
-                            {earnings.filter(e => e.source === 'task_completion').length} Tasks
-                        </span>
+            <div className="glass rounded-2xl p-8 border border-white/10">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                    <div>
+                        <p className="text-gray-400 mb-2">Total Earnings</p>
+                        <p className="text-4xl font-bold text-white">
+                            {formatCurrency(totalEarnings)}
+                        </p>
                     </div>
-                    <div className="flex items-center space-x-2">
-                        <Gift className="w-4 h-4 text-purple-400" />
-                        <span className="text-gray-300">
-                            {earnings.filter(e => e.source === 'bonus').length} Bonuses
-                        </span>
+                    <div>
+                        <p className="text-gray-400 mb-2">Pending</p>
+                        <p className="text-4xl font-bold text-yellow-400">
+                            {formatCurrency(pending)}
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-gray-400 mb-2">Paid Out</p>
+                        <p className="text-4xl font-bold text-green-400">
+                            {formatCurrency(paid)}
+                        </p>
                     </div>
                 </div>
             </div>
 
-            {/* Earnings Breakdown */}
+            {/* Earnings History */}
             <div className="glass rounded-2xl p-6 border border-white/10">
                 <h2 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
                     <Calendar className="w-5 h-5 text-primary-400" />
                     <span>Earnings History</span>
                 </h2>
 
-                <div className="space-y-3">
-                    {earnings.map((earning) => (
-                        <div
-                            key={earning.id}
-                            className="glass-dark rounded-lg p-4 border border-white/10 hover:border-white/20 transition-all"
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-3 flex-1">
-                                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-                                        {getSourceIcon(earning.source)}
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-white font-medium">{earning.description}</p>
-                                        <div className="flex items-center space-x-3 mt-1">
-                                            <span className="text-xs text-gray-400">
-                                                {getSourceLabel(earning.source)}
-                                            </span>
-                                            <span className="text-xs text-gray-600">•</span>
-                                            <span className="text-xs text-gray-400">
-                                                {formatRelativeTime(earning.createdAt)}
-                                            </span>
+                {earnings.length > 0 ? (
+                    <div className="space-y-3">
+                        {earnings.map((earning, index) => (
+                            <div
+                                key={index}
+                                className="glass-dark rounded-lg p-4 border border-white/10 hover:border-white/20 transition-all"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-3 flex-1">
+                                        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                                            <CheckCircle className="w-5 h-5 text-green-400" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-white font-medium">Task #{earning.taskId}</p>
+                                            <div className="flex items-center space-x-3 mt-1">
+                                                <span className={`text-xs px-2 py-1 rounded-full ${earning.status === 'paid'
+                                                        ? 'bg-green-500/20 text-green-400'
+                                                        : 'bg-yellow-500/20 text-yellow-400'
+                                                    }`}>
+                                                    {earning.status}
+                                                </span>
+                                                <span className="text-xs text-gray-400">
+                                                    {formatRelativeTime(earning.date)}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-xl font-bold text-green-400">
-                                        +{formatCurrency(earning.amount)}
-                                    </p>
+                                    <div className="text-right">
+                                        <p className="text-xl font-bold text-green-400">
+                                            +{formatCurrency(earning.amount)}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-12">
+                        <DollarSign className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-xl font-semibold text-white mb-2">No Earnings Yet</h3>
+                        <p className="text-gray-400">Complete tasks to start earning!</p>
+                    </div>
+                )}
             </div>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="glass rounded-xl p-5 border border-white/10">
+                    <p className="text-sm text-gray-400 mb-1">Total Tasks</p>
+                    <p className="text-2xl font-bold text-white">
+                        {earnings.length}
+                    </p>
+                </div>
+                <div className="glass rounded-xl p-5 border border-white/10">
                     <p className="text-sm text-gray-400 mb-1">Average per Task</p>
                     <p className="text-2xl font-bold text-white">
-                        {formatCurrency(
-                            earnings.filter(e => e.source === 'task_completion').reduce((sum, e) => sum + e.amount, 0) /
-                            earnings.filter(e => e.source === 'task_completion').length || 0
-                        )}
+                        {earnings.length > 0 ? formatCurrency(totalEarnings / earnings.length) : formatCurrency(0)}
                     </p>
                 </div>
                 <div className="glass rounded-xl p-5 border border-white/10">
-                    <p className="text-sm text-gray-400 mb-1">This Week</p>
-                    <p className="text-2xl font-bold text-white">
-                        {formatCurrency(totalEarnings * 0.7)}
-                    </p>
-                </div>
-                <div className="glass rounded-xl p-5 border border-white/10">
-                    <p className="text-sm text-gray-400 mb-1">This Month</p>
-                    <p className="text-2xl font-bold text-white">
-                        {formatCurrency(totalEarnings)}
+                    <p className="text-sm text-gray-400 mb-1">Pending Payment</p>
+                    <p className="text-2xl font-bold text-yellow-400">
+                        {formatCurrency(pending)}
                     </p>
                 </div>
             </div>

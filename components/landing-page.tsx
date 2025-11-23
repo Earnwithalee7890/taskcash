@@ -1,6 +1,6 @@
 'use client';
 
-import FarcasterLogin from '@/components/farcaster-login';
+import MultiLoginOptions from '@/components/multi-login-options';
 import { Wallet, TrendingUp, CheckCircle } from 'lucide-react';
 
 export default function LandingPage() {
@@ -41,11 +41,9 @@ export default function LandingPage() {
                 </div>
             </div>
 
-            <div className="glass p-8 rounded-3xl border border-white/10 w-full max-w-md">
-                <p className="text-white font-medium mb-6">Connect your Farcaster account to get started</p>
-                <div className="flex justify-center">
-                    <FarcasterLogin />
-                </div>
+            <div className="w-full max-w-md">
+                <h2 className="text-2xl font-bold text-white mb-6">Get Started</h2>
+                <MultiLoginOptions />
             </div>
         </div>
     );

@@ -3,8 +3,8 @@
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Settings, Bell, Shield, ExternalLink, LogOut, TrendingUp } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { Hash, Wallet, TrendingUp, Users, UserPlus, LogOut, DollarSign, Award, Activity } from 'lucide-react';
+import { formatCurrency, formatNumber } from '@/lib/utils';
 import FarcasterLogin from '@/components/farcaster-login';
 
 export default function AccountPage() {
@@ -19,8 +19,16 @@ export default function AccountPage() {
         loading: true
     });
 
+    const [earnings, setEarnings] = useState({
+        total: 0,
+        pending: 0,
+        paid: 0,
+        loading: true
+    });
+
     useEffect(() => {
         if (user?.fid) {
+            // Fetch Farcaster stats
             fetch(`/api/user/stats?fid=${user.fid}`)
                 .then(res => res.json())
                 .then(data => {
@@ -34,24 +42,21 @@ export default function AccountPage() {
                     }
                 })
                 .catch(err => console.error('Failed to fetch stats:', err));
+
+            // Fetch earnings
+            fetch(`/api/earnings?fid=${user.fid}`)
+                .then(res => res.json())
+                .then(data => {
+                    setEarnings({
+                        total: data.total || 0,
+                        pending: data.pending || 0,
+                        paid: data.paid || 0,
+                        loading: false
+                    });
+                })
+                .catch(err => console.error('Failed to fetch earnings:', err));
         }
     }, [user?.fid]);
-
-    // STRICT: Only use session data. NO FALLBACKS.
-    const userData = user ? {
-        username: user.username,
-        displayName: user.name,
-        pfp: user.image,
-        bio: user.bio,
-        fid: user.fid,
-        // Real data from API (or 0 if loading)
-        balance: 0, // Still simulated for now
-        followers: stats.followers,
-        following: stats.following,
-        tasksCompleted: 0,
-        tasksCreated: 0,
-        score: stats.score,
-    } : null;
 
     if (loading) {
         return (
@@ -61,181 +66,171 @@ export default function AccountPage() {
         );
     }
 
-    if (!userData) {
+    if (!user) {
         return (
             <div className="max-w-md mx-auto mt-20 text-center space-y-6 animate-fade-in">
                 <div className="glass p-8 rounded-2xl border border-white/10">
                     <h1 className="text-3xl font-bold text-white mb-4">Welcome to TaskCash</h1>
                     <p className="text-gray-400 mb-8">
-                        Connect your Farcaster account to start earning rewards and boosting your content.
+                        Connect your Farcaster account to access your profile.
                     </p>
-                    <div className="flex flex-col items-center gap-4">
-                        <FarcasterLogin />
-                        {/* Debug: Force clear any stale session */}
-                        <button
-                            onClick={() => signOut({ callbackUrl: '/account' })}
-                            className="text-xs text-gray-500 hover:text-white underline"
-                        >
-                            Clear Session (Debug)
-                        </button>
-                    </div>
+                    <FarcasterLogin />
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="space-y-8 animate-fade-in">
+        <div className="space-y-6 animate-fade-in max-w-6xl mx-auto">
             {/* Profile Header */}
-            <div className="glass rounded-2xl p-6 md:p-8 border border-white/10 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-primary-500/20 to-accent-500/20 blur-3xl"></div>
-
-                <div className="relative flex flex-col md:flex-row items-start md:items-center gap-6">
+            <div className="glass rounded-2xl p-8 border border-white/10">
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                    {/* Profile Picture */}
                     <div className="relative">
-                        <div className="w-24 h-24 rounded-full p-1 gradient-primary">
-                            <div className="w-full h-full rounded-full overflow-hidden bg-black">
-                                <Image
-                                    src={user.pfp || 'https://github.com/shadcn.png'}
-                                    alt={user.username || 'User'}
-                                    width={96}
-                                    height={96}
-                                    className="object-cover"
-                                />
+                        {user.image ? (
+                            <Image
+                                src={user.image}
+                                alt={user.username}
+                                width={120}
+                                height={120}
+                                className="rounded-2xl border-4 border-primary-500/30"
+                            />
+                        ) : (
+                            <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-4xl font-bold text-white">
+                                {user.username?.charAt(0).toUpperCase()}
                             </div>
+                        )}
+                    </div>
+
+                    {/* User Info */}
+                    <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                            <h1 className="text-3xl font-bold text-white">{user.name || user.username}</h1>
+                            {stats.score > 75 && (
+                                <div className="px-3 py-1 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs font-bold">
+                                    ⚡ Power User
+                                </div>
+                            )}
                         </div>
-                        <div className="absolute -bottom-2 -right-2 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-xs font-medium text-white">
-                            FID: {user.fid}
+                        <p className="text-xl text-gray-400 mb-4">@{user.username}</p>
+                        {user.bio && (
+                            <p className="text-gray-300 mb-4 max-w-2xl">{user.bio}</p>
+                        )}
+
+                        {/* FID Badge */}
+                        <div className="flex items-center gap-2 text-primary-400">
+                            <Hash className="w-5 h-5" />
+                            <span className="font-mono font-semibold">FID: {user.fid}</span>
                         </div>
                     </div>
 
-                    <div className="flex-1 space-y-2">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div>
-                                <h1 className="text-2xl font-bold text-white">{user.displayName}</h1>
-                                <p className="text-primary-400">@{user.username}</p>
-                            </div>
-                            <button className="px-4 py-2 rounded-lg glass-dark border border-white/10 text-sm font-medium text-white hover:bg-white/10 transition-colors">
-                                Edit Profile
-                            </button>
+                    {/* Logout Button */}
+                    <button
+                        onClick={() => signOut({ callbackUrl: '/' })}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                    >
+                        <LogOut className="w-4 h-4" />
+                        <span>Sign Out</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Wallet Section */}
+                <div className="glass rounded-2xl p-6 border border-white/10">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+                            <Wallet className="w-6 h-6 text-green-400" />
                         </div>
-                        <p className="text-gray-300 max-w-2xl">
-                            {user.bio}
+                        <h2 className="text-lg font-bold text-white">Wallet</h2>
+                    </div>
+                    <div className="space-y-3">
+                        <div>
+                            <p className="text-sm text-gray-400 mb-1">Total Earnings</p>
+                            <p className="text-2xl font-bold text-white">{formatCurrency(earnings.total)}</p>
+                        </div>
+                        <div className="pt-3 border-t border-white/10 space-y-2">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-400">Pending</span>
+                                <span className="text-yellow-400 font-semibold">{formatCurrency(earnings.pending)}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-400">Paid Out</span>
+                                <span className="text-green-400 font-semibold">{formatCurrency(earnings.paid)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Farcaster Stats */}
+                <div className="glass rounded-2xl p-6 border border-white/10">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                            <TrendingUp className="w-6 h-6 text-purple-400" />
+                        </div>
+                        <h2 className="text-lg font-bold text-white">Farcaster Stats</h2>
+                    </div>
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-gray-400">
+                                <Users className="w-4 h-4" />
+                                <span className="text-sm">Followers</span>
+                            </div>
+                            <span className="text-xl font-bold text-white">{formatNumber(stats.followers)}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-gray-400">
+                                <UserPlus className="w-4 h-4" />
+                                <span className="text-sm">Following</span>
+                            </div>
+                            <span className="text-xl font-bold text-white">{formatNumber(stats.following)}</span>
+                        </div>
+                        <div className="flex items-center justify-between pt-3 border-t border-white/10">
+                            <div className="flex items-center gap-2 text-gray-400">
+                                <Award className="w-4 h-4" />
+                                <span className="text-sm">Neynar Score</span>
+                            </div>
+                            <span className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">
+                                {stats.score}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Activity Stats */}
+                <div className="glass rounded-2xl p-6 border border-white/10">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                            <Activity className="w-6 h-6 text-blue-400" />
+                        </div>
+                        <h2 className="text-lg font-bold text-white">Activity</h2>
+                    </div>
+                    <div className="space-y-3">
+                        <div className="glass-dark rounded-lg p-3">
+                            <p className="text-sm text-gray-400 mb-1">Tasks Completed</p>
+                            <p className="text-2xl font-bold text-white">0</p>
+                        </div>
+                        <div className="glass-dark rounded-lg p-3">
+                            <p className="text-sm text-gray-400 mb-1">Tasks Created</p>
+                            <p className="text-2xl font-bold text-white">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Connected Wallet (Placeholder) */}
+            <div className="glass rounded-2xl p-6 border border-white/10">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h3 className="text-lg font-bold text-white mb-1">Connected Wallet</h3>
+                        <p className="text-sm text-gray-400">
+                            Connect your wallet to receive payments
                         </p>
-
-                        <div className="flex items-center gap-6 pt-2">
-                            <div className="text-center md:text-left">
-                                <div className="text-lg font-bold text-white">
-                                    {stats.loading ? '...' : user.followers}
-                                </div>
-                                <div className="text-xs text-gray-400">Followers</div>
-                            </div>
-                            <div className="text-center md:text-left">
-                                <div className="text-lg font-bold text-white">
-                                    {stats.loading ? '...' : user.following}
-                                </div>
-                                <div className="text-xs text-gray-400">Following</div>
-                            </div>
-                            <div className="text-center md:text-left">
-                                <div className="text-lg font-bold text-white">
-                                    {stats.loading ? '...' : user.score}
-                                </div>
-                                <div className="text-xs text-gray-400">Neynar Score</div>
-                            </div>
-                            <div className="text-center md:text-left">
-                                <div className="text-lg font-bold text-white">{user.tasksCompleted}</div>
-                                <div className="text-xs text-gray-400">Tasks Done</div>
-                            </div>
-                        </div>
                     </div>
-                </div>
-            </div>
-
-            {/* Financial Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="glass rounded-xl p-6 border border-white/10">
-                    <h3 className="text-gray-400 text-sm font-medium mb-2">Current Balance</h3>
-                    <div className="text-3xl font-bold text-white">{formatCurrency(user.balance)}</div>
-                    <div className="mt-4 h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-primary-500 w-[70%]"></div>
-                    </div>
-                </div>
-
-                <div className="glass rounded-xl p-6 border border-white/10">
-                    <h3 className="text-gray-400 text-sm font-medium mb-2">Total Earned</h3>
-                    <div className="text-3xl font-bold text-green-400">{formatCurrency(0)}</div>
-                    <div className="mt-2 text-xs text-green-400/80 flex items-center">
-                        <TrendingUp className="w-3 h-3 mr-1" />
-                        +0% this week
-                    </div>
-                </div>
-
-                <div className="glass rounded-xl p-6 border border-white/10">
-                    <h3 className="text-gray-400 text-sm font-medium mb-2">Net Profit</h3>
-                    <div className="text-3xl font-bold text-blue-400">{formatCurrency(0)}</div>
-                    <div className="mt-2 text-xs text-blue-400/80">
-                        After spending {formatCurrency(0)}
-                    </div>
-                </div>
-            </div>
-
-            {/* Settings Sections */}
-            <div className="space-y-4">
-                <h2 className="text-xl font-bold text-white px-1">Settings</h2>
-
-                <div className="glass rounded-xl border border-white/10 divide-y divide-white/5">
-                    <button className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors text-left">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400">
-                                <Bell className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <div className="font-medium text-white">Notifications</div>
-                                <div className="text-sm text-gray-400">Manage your alert preferences</div>
-                            </div>
-                        </div>
-                        <ExternalLink className="w-5 h-5 text-gray-500" />
+                    <button className="px-6 py-3 rounded-lg gradient-primary text-white font-medium hover:opacity-90 transition-opacity">
+                        Connect Wallet
                     </button>
-
-                    <button className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors text-left">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400">
-                                <Shield className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <div className="font-medium text-white">Privacy & Security</div>
-                                <div className="text-sm text-gray-400">Control your data and visibility</div>
-                            </div>
-                        </div>
-                        <ExternalLink className="w-5 h-5 text-gray-500" />
-                    </button>
-
-                    <button className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors text-left">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400">
-                                <Settings className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <div className="font-medium text-white">Connected Accounts</div>
-                                <div className="text-sm text-gray-400">Manage linked wallets and socials</div>
-                            </div>
-                        </div>
-                        <ExternalLink className="w-5 h-5 text-gray-500" />
-                    </button>
-                </div>
-
-                <div className="glass rounded-xl border border-white/10 p-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400">
-                                <LogOut className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <div className="font-medium text-white">Sign Out</div>
-                                <div className="text-sm text-gray-400">Disconnect your account</div>
-                            </div>
-                        </div>
-                        <FarcasterLogin />
-                    </div>
                 </div>
             </div>
         </div>

@@ -3,15 +3,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Home, ListTodo, DollarSign, TrendingUp, MessageSquare, User } from 'lucide-react';
+import { Home, ListTodo, DollarSign, User } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 const navItems = [
     { href: '/', label: 'Hub', icon: Home },
     { href: '/tasks', label: 'Tasks', icon: ListTodo },
     { href: '/earnings', label: 'Earnings', icon: DollarSign },
-    { href: '/boosts', label: 'Boosts', icon: TrendingUp },
-    { href: '/mindshare', label: 'MindShare', icon: MessageSquare },
     { href: '/account', label: 'Account', icon: User },
 ];
 

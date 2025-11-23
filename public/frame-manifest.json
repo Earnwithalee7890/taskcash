@@ -1,0 +1,14 @@
+{
+    "name": "TaskCash",
+    "version": "1.0.0",
+    "description": "Earn USDC for completing tasks on Farcaster",
+    "icon": "/logo.png",
+    "homeUrl": "/",
+    "splash": {
+        "image": "/logo.png",
+        "color": "#1F2937"
+    },
+    "button": {
+        "text": "Open TaskCash"
+    }
+}

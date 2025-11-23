@@ -2,7 +2,6 @@
 
 import HubDashboard from "@/components/hub-dashboard";
 import UserProfile from "@/components/user-profile";
-import TaskList from "@/components/task-list";
 import LandingPage from "@/components/landing-page";
 import { useSession } from "next-auth/react";
 
@@ -12,8 +11,15 @@ export default function Home() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="spinner w-8 h-8 text-primary-500"></div>
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+                <div className="relative">
+                    <div className="w-16 h-16 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin"></div>
+                    <div className="absolute inset-0 w-16 h-16 border-4 border-accent-500/20 border-b-accent-500 rounded-full animate-spin" style={{ animationDirection: 'reverse' }}></div>
+                </div>
+                <div className="text-center space-y-2">
+                    <p className="text-white font-medium">Connecting to Farcaster...</p>
+                    <p className="text-sm text-gray-400">Auto-authenticating your account</p>
+                </div>
             </div>
         );
     }
@@ -29,12 +35,6 @@ export default function Home() {
 
             {/* Hub Dashboard */}
             <HubDashboard />
-
-            {/* Available Tasks */}
-            <div className="mt-8">
-                <h2 className="text-2xl font-bold text-white mb-4">Available Tasks</h2>
-                <TaskList />
-            </div>
         </div>
     );
 }
