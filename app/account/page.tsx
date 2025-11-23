@@ -1,212 +1,199 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { User, Wallet, Settings, LogOut, Edit } from 'lucide-react';
-import { formatCurrency, formatNumber } from '@/lib/utils';
-
-interface UserAccount {
-    username: string;
-    displayName: string;
-    bio: string;
-    followers: number;
-    following: number;
-    contentQuality: number;
-    replyQuality: number;
-    engagementQuality: number;
-    balance: number;
-    tasksCompleted: number;
-    tasksCreated: number;
-    totalEarned: number;
-    totalSpent: number;
-}
+import { useSession } from 'next-auth/react';
+import Image from 'next/image';
+import { Settings, Bell, Shield, ExternalLink, LogOut, TrendingUp } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
+import FarcasterLogin from '@/components/farcaster-login';
 
 export default function AccountPage() {
-    const [account, setAccount] = useState<UserAccount | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { data: session, status } = useSession();
+    const loading = status === 'loading';
 
-    useEffect(() => {
-        // Simulated data - in production, fetch from API
-        setTimeout(() => {
-            setAccount({
-                username: 'earnwithalee',
-                displayName: 'Earn With Alee',
-                bio: 'Building the future of social rewards. Helping people earn while engaging with quality content.',
-                followers: 1250,
-                following: 340,
-                contentQuality: 85.5,
-                replyQuality: 78.3,
-                engagementQuality: 92.1,
-                balance: 100.00,
-                tasksCompleted: 23,
-                tasksCreated: 8,
-                totalEarned: 125.50,
-                totalSpent: 45.00,
-            });
-            setLoading(false);
-        }, 500);
-    }, []);
+    // Use session data if available, otherwise show placeholder
+    const user = session?.user ? {
+        username: session.user.username || 'user',
+        displayName: session.user.name || 'User',
+        pfp: session.user.image || 'https://github.com/shadcn.png',
+        bio: session.user.bio || 'No bio available',
+        fid: session.user.fid,
+        balance: 100.00, // Still simulated for now
+        followers: 0, // Will fetch real data in next step
+        following: 0,
+        tasksCompleted: 0,
+        tasksCreated: 0,
+    } : null;
 
     if (loading) {
         return (
-            <div className="space-y-6 animate-fade-in">
-                <div className="glass rounded-2xl p-6 animate-pulse">
-                    <div className="h-64 bg-white/10 rounded-lg"></div>
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="spinner w-8 h-8 text-primary-500"></div>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div className="max-w-md mx-auto mt-20 text-center space-y-6 animate-fade-in">
+                <div className="glass p-8 rounded-2xl border border-white/10">
+                    <h1 className="text-3xl font-bold text-white mb-4">Welcome to TaskCash</h1>
+                    <p className="text-gray-400 mb-8">
+                        Connect your Farcaster account to start earning rewards and boosting your content.
+                    </p>
+                    <div className="flex justify-center">
+                        <FarcasterLogin />
+                    </div>
                 </div>
             </div>
         );
     }
 
-    if (!account) return null;
-
     return (
-        <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-white flex items-center space-x-3">
-                    <User className="w-8 h-8 text-primary-400" />
-                    <span>Account</span>
-                </h1>
-            </div>
+        <div className="space-y-8 animate-fade-in">
+            {/* Profile Header */}
+            <div className="glass rounded-2xl p-6 md:p-8 border border-white/10 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-primary-500/20 to-accent-500/20 blur-3xl"></div>
 
-            {/* Profile Section */}
-            <div className="glass rounded-2xl p-6 border border-white/10">
-                <div className="flex items-start justify-between mb-6">
-                    <div className="flex items-center space-x-4">
-                        <div className="w-20 h-20 rounded-full gradient-primary flex items-center justify-center text-3xl font-bold text-white">
-                            {account.username.charAt(0).toUpperCase()}
+                <div className="relative flex flex-col md:flex-row items-start md:items-center gap-6">
+                    <div className="relative">
+                        <div className="w-24 h-24 rounded-full p-1 gradient-primary">
+                            <div className="w-full h-full rounded-full overflow-hidden bg-black">
+                                <Image
+                                    src={user.pfp}
+                                    alt={user.username}
+                                    width={96}
+                                    height={96}
+                                    className="object-cover"
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <h2 className="text-2xl font-bold text-white">@{account.username}</h2>
-                            <p className="text-gray-400">{account.displayName}</p>
-                        </div>
-                    </div>
-                    <button className="flex items-center space-x-2 px-4 py-2 rounded-lg glass-dark border border-white/10 text-white hover:bg-white/10 transition-colors">
-                        <Edit className="w-4 h-4" />
-                        <span>Edit Profile</span>
-                    </button>
-                </div>
-
-                <p className="text-gray-300 mb-6">{account.bio}</p>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center">
-                        <p className="text-2xl font-bold text-white">{formatNumber(account.followers)}</p>
-                        <p className="text-sm text-gray-400">Followers</p>
-                    </div>
-                    <div className="text-center">
-                        <p className="text-2xl font-bold text-white">{formatNumber(account.following)}</p>
-                        <p className="text-sm text-gray-400">Following</p>
-                    </div>
-                    <div className="text-center">
-                        <p className="text-2xl font-bold text-white">{account.tasksCompleted}</p>
-                        <p className="text-sm text-gray-400">Tasks Done</p>
-                    </div>
-                    <div className="text-center">
-                        <p className="text-2xl font-bold text-white">{account.tasksCreated}</p>
-                        <p className="text-sm text-gray-400">Tasks Created</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Quality Metrics */}
-            <div className="glass rounded-2xl p-6 border border-white/10">
-                <h3 className="text-xl font-bold text-white mb-4">Quality Metrics</h3>
-
-                <div className="space-y-4">
-                    {/* Content Quality */}
-                    <div>
-                        <div className="flex justify-between mb-2">
-                            <span className="text-gray-300">Content Quality</span>
-                            <span className="text-white font-semibold">{account.contentQuality.toFixed(1)}/100</span>
-                        </div>
-                        <div className="w-full bg-gray-700 rounded-full h-3">
-                            <div
-                                className="bg-gradient-to-r from-green-500 to-green-400 h-3 rounded-full transition-all duration-500"
-                                style={{ width: `${account.contentQuality}%` }}
-                            ></div>
+                        <div className="absolute -bottom-2 -right-2 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-xs font-medium text-white">
+                            FID: {user.fid}
                         </div>
                     </div>
 
-                    {/* Reply Quality */}
-                    <div>
-                        <div className="flex justify-between mb-2">
-                            <span className="text-gray-300">Reply Quality</span>
-                            <span className="text-white font-semibold">{account.replyQuality.toFixed(1)}/100</span>
+                    <div className="flex-1 space-y-2">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <h1 className="text-2xl font-bold text-white">{user.displayName}</h1>
+                                <p className="text-primary-400">@{user.username}</p>
+                            </div>
+                            <button className="px-4 py-2 rounded-lg glass-dark border border-white/10 text-sm font-medium text-white hover:bg-white/10 transition-colors">
+                                Edit Profile
+                            </button>
                         </div>
-                        <div className="w-full bg-gray-700 rounded-full h-3">
-                            <div
-                                className="bg-gradient-to-r from-blue-500 to-blue-400 h-3 rounded-full transition-all duration-500"
-                                style={{ width: `${account.replyQuality}%` }}
-                            ></div>
-                        </div>
-                    </div>
+                        <p className="text-gray-300 max-w-2xl">
+                            {user.bio}
+                        </p>
 
-                    {/* Engagement Quality */}
-                    <div>
-                        <div className="flex justify-between mb-2">
-                            <span className="text-gray-300">Engagement Quality</span>
-                            <span className="text-white font-semibold">{account.engagementQuality.toFixed(1)}/100</span>
-                        </div>
-                        <div className="w-full bg-gray-700 rounded-full h-3">
-                            <div
-                                className="bg-gradient-to-r from-purple-500 to-purple-400 h-3 rounded-full transition-all duration-500"
-                                style={{ width: `${account.engagementQuality}%` }}
-                            ></div>
+                        <div className="flex items-center gap-6 pt-2">
+                            <div className="text-center md:text-left">
+                                <div className="text-lg font-bold text-white">{user.followers}</div>
+                                <div className="text-xs text-gray-400">Followers</div>
+                            </div>
+                            <div className="text-center md:text-left">
+                                <div className="text-lg font-bold text-white">{user.following}</div>
+                                <div className="text-xs text-gray-400">Following</div>
+                            </div>
+                            <div className="text-center md:text-left">
+                                <div className="text-lg font-bold text-white">{user.tasksCompleted}</div>
+                                <div className="text-xs text-gray-400">Tasks Done</div>
+                            </div>
+                            <div className="text-center md:text-left">
+                                <div className="text-lg font-bold text-white">{user.tasksCreated}</div>
+                                <div className="text-xs text-gray-400">Created</div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Financial Overview */}
-            <div className="glass rounded-2xl p-6 border border-white/10">
-                <h3 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
-                    <Wallet className="w-5 h-5 text-green-400" />
-                    <span>Financial Overview</span>
-                </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="glass rounded-xl p-6 border border-white/10">
+                    <h3 className="text-gray-400 text-sm font-medium mb-2">Current Balance</h3>
+                    <div className="text-3xl font-bold text-white">{formatCurrency(user.balance)}</div>
+                    <div className="mt-4 h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
+                        <div className="h-full bg-primary-500 w-[70%]"></div>
+                    </div>
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="glass-dark rounded-lg p-4 border border-white/10">
-                        <p className="text-sm text-gray-400 mb-1">Current Balance</p>
-                        <p className="text-3xl font-bold text-white">{formatCurrency(account.balance)}</p>
+                <div className="glass rounded-xl p-6 border border-white/10">
+                    <h3 className="text-gray-400 text-sm font-medium mb-2">Total Earned</h3>
+                    <div className="text-3xl font-bold text-green-400">{formatCurrency(125.50)}</div>
+                    <div className="mt-2 text-xs text-green-400/80 flex items-center">
+                        <TrendingUp className="w-3 h-3 mr-1" />
+                        +12% this week
                     </div>
-                    <div className="glass-dark rounded-lg p-4 border border-white/10">
-                        <p className="text-sm text-gray-400 mb-1">Total Earned</p>
-                        <p className="text-3xl font-bold text-green-400">{formatCurrency(account.totalEarned)}</p>
-                    </div>
-                    <div className="glass-dark rounded-lg p-4 border border-white/10">
-                        <p className="text-sm text-gray-400 mb-1">Total Spent</p>
-                        <p className="text-3xl font-bold text-red-400">{formatCurrency(account.totalSpent)}</p>
-                    </div>
-                    <div className="glass-dark rounded-lg p-4 border border-white/10">
-                        <p className="text-sm text-gray-400 mb-1">Net Profit</p>
-                        <p className="text-3xl font-bold text-blue-400">
-                            {formatCurrency(account.totalEarned - account.totalSpent)}
-                        </p>
+                </div>
+
+                <div className="glass rounded-xl p-6 border border-white/10">
+                    <h3 className="text-gray-400 text-sm font-medium mb-2">Net Profit</h3>
+                    <div className="text-3xl font-bold text-blue-400">{formatCurrency(80.50)}</div>
+                    <div className="mt-2 text-xs text-blue-400/80">
+                        After spending {formatCurrency(45.00)}
                     </div>
                 </div>
             </div>
 
-            {/* Settings */}
-            <div className="glass rounded-2xl p-6 border border-white/10">
-                <h3 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
-                    <Settings className="w-5 h-5 text-gray-400" />
-                    <span>Settings</span>
-                </h3>
+            {/* Settings Sections */}
+            <div className="space-y-4">
+                <h2 className="text-xl font-bold text-white px-1">Settings</h2>
 
-                <div className="space-y-3">
-                    <button className="w-full text-left px-4 py-3 rounded-lg glass-dark border border-white/10 text-white hover:bg-white/10 transition-colors">
-                        Notification Preferences
+                <div className="glass rounded-xl border border-white/10 divide-y divide-white/5">
+                    <button className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors text-left">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400">
+                                <Bell className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <div className="font-medium text-white">Notifications</div>
+                                <div className="text-sm text-gray-400">Manage your alert preferences</div>
+                            </div>
+                        </div>
+                        <ExternalLink className="w-5 h-5 text-gray-500" />
                     </button>
-                    <button className="w-full text-left px-4 py-3 rounded-lg glass-dark border border-white/10 text-white hover:bg-white/10 transition-colors">
-                        Privacy Settings
+
+                    <button className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors text-left">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400">
+                                <Shield className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <div className="font-medium text-white">Privacy & Security</div>
+                                <div className="text-sm text-gray-400">Control your data and visibility</div>
+                            </div>
+                        </div>
+                        <ExternalLink className="w-5 h-5 text-gray-500" />
                     </button>
-                    <button className="w-full text-left px-4 py-3 rounded-lg glass-dark border border-white/10 text-white hover:bg-white/10 transition-colors">
-                        Connected Accounts
+
+                    <button className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors text-left">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400">
+                                <Settings className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <div className="font-medium text-white">Connected Accounts</div>
+                                <div className="text-sm text-gray-400">Manage linked wallets and socials</div>
+                            </div>
+                        </div>
+                        <ExternalLink className="w-5 h-5 text-gray-500" />
                     </button>
-                    <button className="w-full flex items-center justify-between px-4 py-3 rounded-lg glass-dark border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors">
-                        <span>Sign Out</span>
-                        <LogOut className="w-5 h-5" />
-                    </button>
+                </div>
+
+                <div className="glass rounded-xl border border-white/10 p-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400">
+                                <LogOut className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <div className="font-medium text-white">Sign Out</div>
+                                <div className="text-sm text-gray-400">Disconnect your account</div>
+                            </div>
+                        </div>
+                        <FarcasterLogin />
+                    </div>
                 </div>
             </div>
         </div>

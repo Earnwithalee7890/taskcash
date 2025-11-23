@@ -11,6 +11,7 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@farcaster/auth-kit": "^0.8.1",
     "@farcaster/frame-sdk": "^0.1.12",
     "@neynar/nodejs-sdk": "^3.97.0",
     "@prisma/client": "^5.22.0",
