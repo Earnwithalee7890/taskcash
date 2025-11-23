@@ -1,7 +1,5 @@
 import { NeynarAPIClient } from '@neynar/nodejs-sdk';
 
-if (!process.env.NEYNAR_API_KEY) {
-    throw new Error('NEYNAR_API_KEY is not defined in environment variables');
-}
+const apiKey = process.env.NEYNAR_API_KEY || 'NEYNAR_API_DOCS';
 
-export const neynarClient = new NeynarAPIClient(process.env.NEYNAR_API_KEY);
+export const neynarClient = new NeynarAPIClient({ apiKey });
