@@ -6,10 +6,10 @@ import { User, Hash, Wallet, Sparkles, ArrowRight, CheckCircle2 } from 'lucide-r
 import FarcasterLogin from './farcaster-login';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type LoginMethod = 'qr' | 'fid' | 'username' | 'wallet';
+type LoginMethod = 'fid' | 'username' | 'wallet';
 
 export default function MultiLoginOptions() {
-    const [loginMethod, setLoginMethod] = useState<LoginMethod>('qr');
+    const [loginMethod, setLoginMethod] = useState<LoginMethod>('fid');
     const [inputValue, setInputValue] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -113,13 +113,6 @@ export default function MultiLoginOptions() {
 
     const loginMethods = [
         {
-            id: 'qr' as LoginMethod,
-            label: 'QR Code',
-            icon: Sparkles,
-            description: 'Scan with Warpcast',
-            gradient: 'from-purple-500 to-pink-500'
-        },
-        {
             id: 'fid' as LoginMethod,
             label: 'FID',
             icon: Hash,
@@ -162,8 +155,8 @@ export default function MultiLoginOptions() {
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             className={`relative p-4 rounded-lg transition-all duration-300 overflow-hidden ${loginMethod === method.id
-                                    ? 'glass-dark'
-                                    : 'hover:bg-white/5'
+                                ? 'glass-dark'
+                                : 'hover:bg-white/5'
                                 }`}
                         >
                             {loginMethod === method.id && (
@@ -175,8 +168,8 @@ export default function MultiLoginOptions() {
                             )}
                             <div className="relative flex flex-col items-center gap-2">
                                 <div className={`p-2 rounded-lg transition-all duration-300 ${loginMethod === method.id
-                                        ? `bg-gradient-to-br ${method.gradient}`
-                                        : 'bg-white/5'
+                                    ? `bg-gradient-to-br ${method.gradient}`
+                                    : 'bg-white/5'
                                     }`}>
                                     <Icon className={`w-5 h-5 ${loginMethod === method.id ? 'text-white' : 'text-gray-400'
                                         }`} />
@@ -218,97 +211,89 @@ export default function MultiLoginOptions() {
                             </p>
                         </div>
 
-                        {loginMethod === 'qr' ? (
-                            <motion.div
-                                initial={{ scale: 0.9 }}
-                                animate={{ scale: 1 }}
-                                className="flex justify-center"
-                            >
-                                <FarcasterLogin />
-                            </motion.div>
-                        ) : (
-                            <form onSubmit={handleLogin} className="space-y-4">
-                                {loginMethod !== 'wallet' && (
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-gray-300">
-                                            {loginMethod === 'fid' ? 'Enter your FID' : 'Enter your username'}
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                value={inputValue}
-                                                onChange={(e) => setInputValue(e.target.value)}
-                                                placeholder={
-                                                    loginMethod === 'fid'
-                                                        ? '3'
-                                                        : 'dwr'
-                                                }
-                                                className="w-full px-4 py-3 pl-12 rounded-xl glass-dark border-2 border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 transition-all duration-300"
-                                                required
-                                            />
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                                                {currentMethod && (
-                                                    <currentMethod.icon className="w-5 h-5 text-gray-400" />
-                                                )}
-                                            </div>
+
+                        <form onSubmit={handleLogin} className="space-y-4">
+                            {loginMethod !== 'wallet' && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-300">
+                                        {loginMethod === 'fid' ? 'Enter your FID' : 'Enter your username'}
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={inputValue}
+                                            onChange={(e) => setInputValue(e.target.value)}
+                                            placeholder={
+                                                loginMethod === 'fid'
+                                                    ? '3'
+                                                    : 'dwr'
+                                            }
+                                            className="w-full px-4 py-3 pl-12 rounded-xl glass-dark border-2 border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 transition-all duration-300"
+                                            required
+                                        />
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                                            {currentMethod && (
+                                                <currentMethod.icon className="w-5 h-5 text-gray-400" />
+                                            )}
                                         </div>
                                     </div>
+                                </div>
+                            )}
+
+                            <AnimatePresence>
+                                {error && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-2"
+                                    >
+                                        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                                        {error}
+                                    </motion.div>
                                 )}
 
-                                <AnimatePresence>
-                                    {error && (
-                                        <motion.div
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: 'auto' }}
-                                            exit={{ opacity: 0, height: 0 }}
-                                            className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-2"
-                                        >
-                                            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                                            {error}
-                                        </motion.div>
-                                    )}
+                                {success && (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-sm flex items-center gap-2"
+                                    >
+                                        <CheckCircle2 className="w-5 h-5" />
+                                        Success! Redirecting...
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
 
-                                    {success && (
-                                        <motion.div
-                                            initial={{ opacity: 0, scale: 0.9 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-sm flex items-center gap-2"
-                                        >
-                                            <CheckCircle2 className="w-5 h-5" />
-                                            Success! Redirecting...
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
+                            <motion.button
+                                type="submit"
+                                disabled={loading || success || (loginMethod !== 'wallet' && !inputValue)}
+                                whileHover={{ scale: loading || success ? 1 : 1.02 }}
+                                whileTap={{ scale: loading || success ? 1 : 0.98 }}
+                                className={`w-full py-4 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${loading || success || (loginMethod !== 'wallet' && !inputValue)
+                                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                                    : `bg-gradient-to-r ${currentMethod?.gradient} text-white hover:opacity-90 shadow-lg hover:shadow-xl`
+                                    }`}
+                            >
+                                {loading ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                                        <span>Authenticating...</span>
+                                    </>
+                                ) : success ? (
+                                    <>
+                                        <CheckCircle2 className="w-5 h-5" />
+                                        <span>Success!</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>{loginMethod === 'wallet' ? 'Connect Wallet' : 'Sign In'}</span>
+                                        <ArrowRight className="w-5 h-5" />
+                                    </>
+                                )}
+                            </motion.button>
+                        </form>
 
-                                <motion.button
-                                    type="submit"
-                                    disabled={loading || success || (loginMethod !== 'wallet' && !inputValue)}
-                                    whileHover={{ scale: loading || success ? 1 : 1.02 }}
-                                    whileTap={{ scale: loading || success ? 1 : 0.98 }}
-                                    className={`w-full py-4 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${loading || success || (loginMethod !== 'wallet' && !inputValue)
-                                            ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                                            : `bg-gradient-to-r ${currentMethod?.gradient} text-white hover:opacity-90 shadow-lg hover:shadow-xl`
-                                        }`}
-                                >
-                                    {loading ? (
-                                        <>
-                                            <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                                            <span>Authenticating...</span>
-                                        </>
-                                    ) : success ? (
-                                        <>
-                                            <CheckCircle2 className="w-5 h-5" />
-                                            <span>Success!</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <span>{loginMethod === 'wallet' ? 'Connect Wallet' : 'Sign In'}</span>
-                                            <ArrowRight className="w-5 h-5" />
-                                        </>
-                                    )}
-                                </motion.button>
-                            </form>
-                        )}
                     </div>
                 </motion.div>
             </AnimatePresence>
