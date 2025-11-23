@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     try {
         const apiKey = process.env.NEYNAR_API_KEY || 'NEYNAR_API_DOCS';
