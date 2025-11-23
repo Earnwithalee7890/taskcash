@@ -75,7 +75,7 @@ const authOptions = {
             return token;
         },
     },
-    secret: process.env.NEXTAUTH_SECRET,
+    secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-for-dev-only-change-in-prod',
 };
 
 const handler = NextAuth(authOptions);
