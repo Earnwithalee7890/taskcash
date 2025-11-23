@@ -20,7 +20,7 @@ export async function GET(request: Request) {
         }
 
         // Get the first user associated with this address
-        const user: any = Object.values(response)[0][0];
+        const user: any = (Object.values(response)[0] as any)[0];
 
         if (!user) {
             return NextResponse.json({
